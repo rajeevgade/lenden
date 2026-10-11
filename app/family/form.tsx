@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { Alert } from 'react-native';
 import { Stack, useLocalSearchParams, useRouter } from 'expo-router';
 import { createFamily, getFamily, updateFamily } from '../../src/db';
-import { Button, Field, Input, Loading, Screen, Spacer } from '../../src/components/ui';
+import { Button, Field, HeaderButton, Input, Loading, Screen, Spacer } from '../../src/components/ui';
 import { t } from '../../src/i18n';
 
 export default function FamilyFormScreen() {
@@ -56,7 +56,12 @@ export default function FamilyFormScreen() {
 
   return (
     <Screen>
-      <Stack.Screen options={{ title: id ? t.families.editFamily : t.families.newFamily }} />
+      <Stack.Screen
+        options={{
+          title: id ? t.families.editFamily : t.families.newFamily,
+          headerRight: () => <HeaderButton label={t.common.save} onPress={onSave} disabled={saving} />,
+        }}
+      />
       <Field label={t.families.name} error={nameError}>
         <Input value={name} onChangeText={(v) => { setName(v); setNameError(null); }} placeholder={t.families.namePlaceholder} autoFocus autoCapitalize="words" returnKeyType="next" />
       </Field>

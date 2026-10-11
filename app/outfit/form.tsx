@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { Alert } from 'react-native';
 import { Stack, useLocalSearchParams, useRouter } from 'expo-router';
 import { createOutfit, deleteOutfit, getOutfit, listPersonLabels, updateOutfit } from '../../src/db';
-import { Button, Chip, ChipRow, Field, Input, Loading, Screen, Spacer } from '../../src/components/ui';
+import { Button, Chip, ChipRow, Field, HeaderButton, Input, Loading, Screen, Spacer } from '../../src/components/ui';
 import { PhotoField } from '../../src/components/PhotoField';
 import { deletePhoto } from '../../src/services/photos';
 import { t } from '../../src/i18n';
@@ -70,7 +70,12 @@ export default function OutfitFormScreen() {
 
   return (
     <Screen>
-      <Stack.Screen options={{ title: id ? t.outfit.editOutfit : t.outfit.newOutfit }} />
+      <Stack.Screen
+        options={{
+          title: id ? t.outfit.editOutfit : t.outfit.newOutfit,
+          headerRight: () => <HeaderButton label={t.common.save} onPress={onSave} disabled={saving} />,
+        }}
+      />
       <Field label={t.common.photo}>
         <PhotoField value={photo} onChange={setPhoto} />
       </Field>

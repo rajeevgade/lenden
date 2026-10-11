@@ -33,7 +33,12 @@ export function Screen({
   return (
     <SafeAreaView style={[styles.screen, style]} edges={['bottom', 'left', 'right']}>
       {scroll ? (
-        <ScrollView contentContainerStyle={[inner, { paddingBottom: space.xxl * 2 }]} keyboardShouldPersistTaps="handled">
+        <ScrollView
+          contentContainerStyle={[inner, { paddingBottom: space.xxl * 2 }]}
+          keyboardShouldPersistTaps="handled"
+          keyboardDismissMode="interactive"
+          automaticallyAdjustKeyboardInsets
+        >
           {children}
         </ScrollView>
       ) : (
@@ -112,6 +117,15 @@ export function Fab({ label, onPress }: { label: string; onPress: () => void }) 
   return (
     <Pressable accessibilityRole="button" onPress={onPress} style={({ pressed }) => [styles.fab, pressed && { opacity: 0.8 }]}>
       <Text style={styles.fabText}>＋ {label}</Text>
+    </Pressable>
+  );
+}
+
+/** Text action for a stack header (e.g. Save on a modal form), so it stays reachable while the keyboard is up. */
+export function HeaderButton({ label, onPress, disabled }: { label: string; onPress: () => void; disabled?: boolean }) {
+  return (
+    <Pressable accessibilityRole="button" onPress={onPress} disabled={disabled} hitSlop={hit} style={{ opacity: disabled ? 0.5 : 1 }}>
+      <Text style={[font.bodyStrong, { color: colors.primary }]}>{label}</Text>
     </Pressable>
   );
 }

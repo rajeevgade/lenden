@@ -1,3 +1,4 @@
+import * as FileSystem from 'expo-file-system/legacy';
 import * as Print from 'expo-print';
 import * as Sharing from 'expo-sharing';
 import { formatISODate, todayISO } from '../domain/dates';
@@ -43,8 +44,18 @@ function shell(title: string, body: string): string {
   </style></head><body>${body}</body></html>`;
 }
 
-async function printAndShare(html: string): Promise<void> {
-  const { uri } = await Print.printToFileAsync({ html });
+/** Title → file name the share sheet and Files app will show. Drops characters iOS/Android paths reject. */
+function pdfFileName(title: string): string {
+  const base = title.replace(/[\\/:*?"<>|]/g, '').replace(/\s+/g, ' ').trim() || 'LenDen';
+  return `${base}.pdf`;
+}
+
+async function printAndShare(html: string, title: string): Promise<void> {
+  const { uri: printed } = await Print.printToFileAsync({ html });
+  // expo-print names the file with a UUID; rename it so the shared file reads like the document.
+  const uri = `${FileSystem.cacheDirectory}${encodeURIComponent(pdfFileName(title))}`;
+  await FileSystem.deleteAsync(uri, { idempotent: true });
+  await FileSystem.moveAsync({ from: printed, to: uri });
   if (await Sharing.isAvailableAsync()) {
     await Sharing.shareAsync(uri, { mimeType: 'application/pdf', UTI: 'com.adobe.pdf' });
   }
@@ -67,7 +78,7 @@ export async function exportFamilyLedgerPdf(family: Family, entries: EntryWithEv
     <table><thead><tr><th>${t.pdf.colEvent}</th><th>${t.pdf.colDate}</th><th>${t.pdf.colDirection}</th><th class="num">${t.pdf.colGift}</th><th>${t.pdf.colNote}</th></tr></thead><tbody>${rows}</tbody></table>
     <h2>${t.pdf.totals}</h2>
     <table><thead><tr><th></th><th class="num">${t.direction.gaveShort}</th><th class="num">${t.direction.receivedShort}</th><th class="num">${t.family.net}</th></tr></thead><tbody>${totalsRows(entries)}</tbody></table>`;
-  await printAndShare(shell(title, body));
+  await printAndShare(shell(title, body), title);
 }
 
 export async function exportEventPdf(event: EventListItem, entries: EntryWithFamily[]): Promise<void> {
@@ -89,5 +100,5 @@ export async function exportEventPdf(event: EventListItem, entries: EntryWithFam
     <table><thead><tr><th>${t.pdf.colFamily}</th><th>${t.pdf.colDirection}</th><th class="num">${t.pdf.colGift}</th><th>${t.pdf.colNote}</th></tr></thead><tbody>${rows}</tbody></table>
     <h2>${t.pdf.totals}</h2>
     <table><thead><tr><th></th><th class="num">${t.direction.gaveShort}</th><th class="num">${t.direction.receivedShort}</th><th class="num">${t.family.net}</th></tr></thead><tbody>${totalsRows(entries)}</tbody></table>`;
-  await printAndShare(shell(title, body));
+  await printAndShare(shell(title, body), title);
 }

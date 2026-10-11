@@ -16,7 +16,7 @@ import { formatMoney, parseMoney, toMajorString, SUPPORTED_CURRENCIES, currencyI
 import { suggestGift } from '../../src/domain/ledger';
 import { formatISODate } from '../../src/domain/dates';
 import { useSettings } from '../../src/hooks/useSettings';
-import { Button, Caption, Chip, ChipRow, Field, Input, Loading, Screen, Segmented, Spacer } from '../../src/components/ui';
+import { Button, Caption, Chip, ChipRow, Field, HeaderButton, Input, Loading, Screen, Segmented, Spacer } from '../../src/components/ui';
 import { FamilyPicker } from '../../src/components/FamilyPicker';
 import { EventPicker } from '../../src/components/EventPicker';
 import { PhotoField } from '../../src/components/PhotoField';
@@ -142,7 +142,12 @@ export default function EntryFormScreen() {
 
   return (
     <Screen>
-      <Stack.Screen options={{ title: isEdit ? t.entry.editEntry : t.entry.newEntry }} />
+      <Stack.Screen
+        options={{
+          title: isEdit ? t.entry.editEntry : t.entry.newEntry,
+          headerRight: () => <HeaderButton label={t.common.save} onPress={onSave} disabled={saving} />,
+        }}
+      />
 
       <Field label={t.entry.family} error={errors.family}>
         <FamilyPicker value={family} onChange={setFamily} autoFocus={!family && !isEdit} />

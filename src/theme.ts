@@ -26,8 +26,8 @@ export const font = {
   bodyStrong: { fontSize: 17, fontWeight: '600' as const, color: colors.text },
   caption: { fontSize: 14, color: colors.textMuted },
   label: { fontSize: 14, fontWeight: '600' as const, color: colors.textMuted, textTransform: 'uppercase' as const, letterSpacing: 0.6 },
-  money: { fontSize: 22, fontWeight: '700' as const, fontVariant: ['tabular-nums'] as const },
-  bigMoney: { fontSize: 40, fontWeight: '700' as const, fontVariant: ['tabular-nums'] as const },
+  money: { fontSize: 22, fontWeight: '700' as const, fontVariant: ['tabular-nums' as const] },
+  bigMoney: { fontSize: 40, fontWeight: '700' as const, fontVariant: ['tabular-nums' as const] },
 };
 
 export const hit = { top: 8, bottom: 8, left: 8, right: 8 };

@@ -5,7 +5,7 @@ import DateTimePicker from '@react-native-community/datetimepicker';
 import { createEvent, getEvent, getFamily, updateEvent } from '../../src/db';
 import { EVENT_TYPES, type EventType, type Family } from '../../src/domain/types';
 import { formatISODate, isValidISODate, todayISO } from '../../src/domain/dates';
-import { Button, Chip, ChipRow, Field, Input, Loading, Screen, Segmented, Spacer } from '../../src/components/ui';
+import { Button, Chip, ChipRow, Field, HeaderButton, Input, Loading, Screen, Segmented, Spacer } from '../../src/components/ui';
 import { FamilyPicker } from '../../src/components/FamilyPicker';
 import { t } from '../../src/i18n';
 import { colors, font, radius, space } from '../../src/theme';
@@ -76,7 +76,12 @@ export default function EventFormScreen() {
 
   return (
     <Screen>
-      <Stack.Screen options={{ title: id ? t.events.editEvent : t.events.newEvent }} />
+      <Stack.Screen
+        options={{
+          title: id ? t.events.editEvent : t.events.newEvent,
+          headerRight: () => <HeaderButton label={t.common.save} onPress={onSave} disabled={saving} />,
+        }}
+      />
 
       <Field label={t.events.host} error={errors.host}>
         <Segmented
