@@ -1,12 +1,13 @@
 import React, { useMemo, useState } from 'react';
-import { SectionList, Text, View } from 'react-native';
+import { SectionList, View } from 'react-native';
 import { useRouter } from 'expo-router';
 import { listEvents, type EventListItem } from '../../src/db';
 import { formatISODate, isUpcoming } from '../../src/domain/dates';
 import { useFocusedQuery } from '../../src/hooks/useAsync';
-import { Button, EmptyState, Fab, Input, ListRow, Loading, Screen } from '../../src/components/ui';
+import { Button, EmptyState, Fab, LargeTitle, ListRow, Loading, rowPosition, Screen, SearchField, Txt } from '../../src/components/ui';
 import { t } from '../../src/i18n';
-import { colors, font, space } from '../../src/theme';
+import { space } from '../../src/theme';
+
 
 export default function EventsScreen() {
   const router = useRouter();
@@ -26,28 +27,38 @@ export default function EventsScreen() {
   const showEmpty = !events.loading && sections.length === 0 && search === '';
 
   return (
-    <Screen scroll={false} padded={false}>
-      <View style={{ padding: space.lg, paddingBottom: space.sm }}>
-        <Input value={search} onChangeText={setSearch} placeholder={t.events.searchPlaceholder} returnKeyType="search" clearButtonMode="while-editing" />
-      </View>
+    <Screen scroll={false} padded={false} edges={['top', 'left', 'right']}>
+      <LargeTitle>{t.tabs.events}</LargeTitle>
+      {showEmpty ? null : (
+        <View style={{ paddingHorizontal: space.lg, paddingBottom: space.sm }}>
+          <SearchField value={search} onChangeText={setSearch} placeholder={t.events.searchPlaceholder} />
+        </View>
+      )}
       {events.loading && !events.data ? (
         <Loading />
       ) : showEmpty ? (
-        <EmptyState title={t.events.empty} hint={t.events.emptyHint} action={<Button label={t.events.addEvent} onPress={() => router.push('/event/form')} />} />
+        <EmptyState
+          icon="calendar-outline"
+          title={t.events.empty}
+          hint={t.events.emptyHint}
+          action={<Button label={t.events.addEvent} icon="add" onPress={() => router.push('/event/form')} />}
+        />
       ) : (
         <SectionList
           sections={sections}
           keyExtractor={(e) => e.id}
           keyboardShouldPersistTaps="handled"
+          keyboardDismissMode="on-drag"
           stickySectionHeadersEnabled={false}
-          contentContainerStyle={{ paddingBottom: 120 }}
+          contentContainerStyle={{ paddingHorizontal: space.lg, paddingBottom: 120 }}
           renderSectionHeader={({ section }) => (
-            <Text style={[font.label, { paddingHorizontal: space.lg, paddingTop: space.lg, paddingBottom: space.sm, backgroundColor: colors.bg }]}>
+            <Txt variant="label" tone="muted" style={{ paddingHorizontal: space.lg, paddingTop: space.lg, paddingBottom: space.sm }}>
               {section.title}
-            </Text>
+            </Txt>
           )}
-          renderItem={({ item }) => (
+          renderItem={({ item, index, section }) => (
             <ListRow
+              position={rowPosition(index, section.data.length)}
               title={item.name}
               subtitle={`${formatISODate(item.date)} · ${item.hostFamilyName ? t.events.hostedBy(item.hostFamilyName) : t.events.ourEvent} · ${t.events.entries(item.entryCount)}`}
               onPress={() => router.push({ pathname: '/event/[id]', params: { id: item.id } })}

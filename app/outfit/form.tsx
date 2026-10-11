@@ -73,6 +73,7 @@ export default function OutfitFormScreen() {
       <Stack.Screen
         options={{
           title: id ? t.outfit.editOutfit : t.outfit.newOutfit,
+          headerLeft: () => <HeaderButton label={t.common.cancel} bold={false} onPress={() => router.back()} />,
           headerRight: () => <HeaderButton label={t.common.save} onPress={onSave} disabled={saving} />,
         }}
       />
@@ -80,7 +81,7 @@ export default function OutfitFormScreen() {
         <PhotoField value={photo} onChange={setPhoto} />
       </Field>
       <Field label={t.outfit.person} error={error}>
-        <Input value={person} onChangeText={(v) => { setPerson(v); setError(null); }} placeholder={t.outfit.personPlaceholder} autoCapitalize="words" autoFocus={!id} />
+        <Input value={person} onChangeText={(v) => { setPerson(v); setError(null); }} placeholder={t.outfit.personPlaceholder} invalid={!!error} autoCapitalize="words" autoFocus={!id} />
         {labels.length ? (
           <ChipRow>
             {labels.map((l) => (
@@ -94,12 +95,10 @@ export default function OutfitFormScreen() {
       </Field>
       <Spacer />
       <Button label={t.common.save} onPress={onSave} loading={saving} disabled={saving} />
-      <Spacer h={8} />
-      <Button label={t.common.cancel} variant="ghost" onPress={() => router.back()} />
       {id ? (
         <>
           <Spacer h={space.xl} />
-          <Button label={t.common.delete} variant="ghost" onPress={onDelete} style={{ alignSelf: 'center' }} />
+          <Button label={t.common.delete} variant="destructive" onPress={onDelete} />
         </>
       ) : null}
     </Screen>

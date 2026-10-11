@@ -1,10 +1,11 @@
 import React from 'react';
-import { Pressable, Text, View } from 'react-native';
+import { Pressable, StyleSheet, View } from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
 import { formatMoney } from '../domain/money';
 import type { Entry } from '../domain/types';
 import { t } from '../i18n';
-import { colors, font, radius, space } from '../theme';
-import { Caption } from './ui';
+import { font, radius, space, useTheme } from '../theme';
+import { Txt, type RowPosition } from './ui';
 import { directionColor } from './MoneyText';
 
 export function giftLabel(entry: Entry): string {
@@ -13,31 +14,68 @@ export function giftLabel(entry: Entry): string {
   return `${entry.itemDescription ?? ''}${value}`;
 }
 
-export function EntryLine({ entry, onPress, subtitle }: { entry: Entry; onPress?: () => void; subtitle?: string }) {
-  const label = entry.direction === 'gave' ? t.direction.gave : t.direction.received;
+/**
+ * One gift as a table cell: direction badge, who/note, amount. Works inside <Group> (gets `position`)
+ * or standalone as its own rounded row.
+ */
+export function EntryLine({
+  entry,
+  onPress,
+  subtitle,
+  position = 'only',
+}: {
+  entry: Entry;
+  onPress?: () => void;
+  subtitle?: string;
+  position?: RowPosition;
+}) {
+  const { colors } = useTheme();
+  const color = directionColor(entry.direction, colors);
+  const gave = entry.direction === 'gave';
+  const top = position === 'only' || position === 'first';
+  const bottom = position === 'only' || position === 'last';
   return (
     <Pressable
       onPress={onPress}
-      style={({ pressed }) => ({
-        flexDirection: 'row',
-        alignItems: 'center',
-        gap: space.md,
-        backgroundColor: pressed ? colors.surfaceAlt : colors.surface,
-        borderRadius: radius.md,
-        padding: space.md,
-        marginBottom: space.sm,
-        borderLeftWidth: 4,
-        borderLeftColor: directionColor(entry.direction),
-      })}
+      accessibilityRole={onPress ? 'button' : undefined}
+      style={({ pressed }) => [
+        styles.row,
+        {
+          backgroundColor: pressed ? colors.surfaceAlt : colors.surface,
+          borderTopLeftRadius: top ? radius.md : 0,
+          borderTopRightRadius: top ? radius.md : 0,
+          borderBottomLeftRadius: bottom ? radius.md : 0,
+          borderBottomRightRadius: bottom ? radius.md : 0,
+        },
+      ]}
     >
-      <View style={{ flex: 1 }}>
-        <Text style={[font.caption, { color: directionColor(entry.direction), fontWeight: '700' }]}>{label}</Text>
-        {subtitle ? <Text style={font.bodyStrong}>{subtitle}</Text> : null}
-        {entry.note ? <Caption>{entry.note}</Caption> : null}
+      <View style={[styles.badge, { backgroundColor: color + '22' }]}>
+        <Ionicons name={gave ? 'arrow-up' : 'arrow-down'} size={18} color={color} />
       </View>
-      <Text style={[font.money, { color: directionColor(entry.direction), fontSize: entry.kind === 'cash' ? 20 : 15, maxWidth: '50%', textAlign: 'right' }]}>
-        {giftLabel(entry)}
-      </Text>
+      <View style={[styles.body, !bottom && { borderBottomWidth: StyleSheet.hairlineWidth, borderBottomColor: colors.separator }]}>
+        <View style={{ flex: 1 }}>
+          {subtitle ? (
+            <Txt variant="bodyStrong" numberOfLines={1}>
+              {subtitle}
+            </Txt>
+          ) : null}
+          <Txt variant={subtitle ? 'subhead' : 'bodyStrong'} style={{ color }}>
+            {gave ? t.direction.gave : t.direction.received}
+          </Txt>
+          {entry.note ? (
+            <Txt variant="subhead" tone="muted" numberOfLines={2}>
+              {entry.note}
+            </Txt>
+          ) : null}
+        </View>
+        <Txt style={[font.money, { color, fontSize: entry.kind === 'cash' ? 20 : 15, maxWidth: '55%', textAlign: 'right' }]}>{giftLabel(entry)}</Txt>
+      </View>
     </Pressable>
   );
 }
+
+const styles = StyleSheet.create({
+  row: { flexDirection: 'row', alignItems: 'center', paddingLeft: space.lg, gap: space.md, minHeight: 60 },
+  badge: { width: 32, height: 32, borderRadius: 16, alignItems: 'center', justifyContent: 'center' },
+  body: { flex: 1, flexDirection: 'row', alignItems: 'center', gap: space.sm, paddingVertical: space.md, paddingRight: space.lg },
+});

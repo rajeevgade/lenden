@@ -59,11 +59,12 @@ export default function FamilyFormScreen() {
       <Stack.Screen
         options={{
           title: id ? t.families.editFamily : t.families.newFamily,
+          headerLeft: () => <HeaderButton label={t.common.cancel} bold={false} onPress={() => router.back()} />,
           headerRight: () => <HeaderButton label={t.common.save} onPress={onSave} disabled={saving} />,
         }}
       />
       <Field label={t.families.name} error={nameError}>
-        <Input value={name} onChangeText={(v) => { setName(v); setNameError(null); }} placeholder={t.families.namePlaceholder} autoFocus autoCapitalize="words" returnKeyType="next" />
+        <Input value={name} onChangeText={(v) => { setName(v); setNameError(null); }} placeholder={t.families.namePlaceholder} invalid={!!nameError} autoFocus autoCapitalize="words" returnKeyType="next" />
       </Field>
       <Field label={`${t.families.relation} (${t.common.optional})`}>
         <Input value={relation} onChangeText={setRelation} placeholder={t.families.relationPlaceholder} autoCapitalize="sentences" />
@@ -79,8 +80,6 @@ export default function FamilyFormScreen() {
       </Field>
       <Spacer />
       <Button label={t.common.save} onPress={onSave} loading={saving} disabled={saving} />
-      <Spacer h={8} />
-      <Button label={t.common.cancel} variant="ghost" onPress={() => router.back()} />
     </Screen>
   );
 }

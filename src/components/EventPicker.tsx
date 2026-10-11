@@ -1,13 +1,15 @@
 import React, { useEffect, useState } from 'react';
 import { FlatList, Modal, Pressable, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { Ionicons } from '@expo/vector-icons';
 import { listEvents, type EventListItem } from '../db';
 import { formatISODate } from '../domain/dates';
 import { t } from '../i18n';
-import { colors, font, radius, space } from '../theme';
-import { Button, Input, ListRow } from './ui';
+import { font, radius, space, useTheme } from '../theme';
+import { HeaderButton, ListRow, SearchField } from './ui';
 
 export function EventPicker({ value, onChange }: { value: EventListItem | null; onChange: (e: EventListItem) => void }) {
+  const { colors } = useTheme();
   const [open, setOpen] = useState(false);
   const [search, setSearch] = useState('');
   const [events, setEvents] = useState<EventListItem[]>([]);
@@ -20,32 +22,54 @@ export function EventPicker({ value, onChange }: { value: EventListItem | null; 
     <>
       <Pressable
         onPress={() => setOpen(true)}
-        style={{ backgroundColor: colors.surface, borderWidth: 1, borderColor: value ? colors.primary : colors.border, borderRadius: radius.md, minHeight: 52, justifyContent: 'center', paddingHorizontal: space.md }}
+        accessibilityRole="button"
+        style={({ pressed }) => ({
+          backgroundColor: pressed ? colors.surfaceAlt : colors.surface,
+          borderWidth: value ? 2 : 0,
+          borderColor: colors.tint,
+          borderRadius: radius.md,
+          minHeight: 52,
+          flexDirection: 'row',
+          alignItems: 'center',
+          gap: space.sm,
+          paddingHorizontal: space.lg,
+          paddingVertical: space.sm,
+        })}
       >
-        {value ? (
-          <>
-            <Text style={font.bodyStrong}>{value.name}</Text>
-            <Text style={font.caption}>
-              {formatISODate(value.date)} · {value.hostFamilyName ? t.events.hostedBy(value.hostFamilyName) : t.events.ourEvent}
-            </Text>
-          </>
-        ) : (
-          <Text style={[font.body, { color: colors.textMuted }]}>{t.entry.eventPlaceholder}</Text>
-        )}
+        <View style={{ flex: 1 }}>
+          {value ? (
+            <>
+              <Text style={[font.bodyStrong, { color: colors.text }]}>{value.name}</Text>
+              <Text style={[font.subhead, { color: colors.textMuted }]}>
+                {formatISODate(value.date)} · {value.hostFamilyName ? t.events.hostedBy(value.hostFamilyName) : t.events.ourEvent}
+              </Text>
+            </>
+          ) : (
+            <Text style={[font.body, { color: colors.textTertiary }]}>{t.entry.eventPlaceholder}</Text>
+          )}
+        </View>
+        <Ionicons name="chevron-forward" size={18} color={colors.textTertiary} />
       </Pressable>
       <Modal visible={open} animationType="slide" presentationStyle="pageSheet" onRequestClose={() => setOpen(false)}>
-        <SafeAreaView style={{ flex: 1, backgroundColor: colors.bg }} edges={['top', 'bottom']}>
-          <View style={{ padding: space.lg }}>
-            <Input value={search} onChangeText={setSearch} placeholder={t.events.searchPlaceholder} autoFocus />
+        <SafeAreaView style={{ flex: 1, backgroundColor: colors.bg }} edges={['bottom']}>
+          <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: space.lg, paddingTop: space.lg, paddingBottom: space.sm }}>
+            <Text style={[font.headline, { color: colors.text }]}>{t.entry.event}</Text>
+            <HeaderButton label={t.common.cancel} bold={false} onPress={() => setOpen(false)} />
+          </View>
+          <View style={{ paddingHorizontal: space.lg, paddingBottom: space.md }}>
+            <SearchField value={search} onChangeText={setSearch} placeholder={t.events.searchPlaceholder} autoFocus />
           </View>
           <FlatList
             data={events}
             keyExtractor={(e) => e.id}
             keyboardShouldPersistTaps="handled"
-            renderItem={({ item }) => (
+            contentContainerStyle={{ paddingHorizontal: space.lg, paddingBottom: space.xl }}
+            renderItem={({ item, index }) => (
               <ListRow
                 title={item.name}
                 subtitle={`${formatISODate(item.date)} · ${item.hostFamilyName ? t.events.hostedBy(item.hostFamilyName) : t.events.ourEvent}`}
+                position={events.length === 1 ? 'only' : index === 0 ? 'first' : index === events.length - 1 ? 'last' : 'middle'}
+                chevron={false}
                 onPress={() => {
                   onChange(item);
                   setOpen(false);
@@ -53,9 +77,6 @@ export function EventPicker({ value, onChange }: { value: EventListItem | null; 
               />
             )}
           />
-          <View style={{ padding: space.lg }}>
-            <Button label={t.common.cancel} variant="secondary" onPress={() => setOpen(false)} />
-          </View>
         </SafeAreaView>
       </Modal>
     </>

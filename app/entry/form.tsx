@@ -22,7 +22,7 @@ import { EventPicker } from '../../src/components/EventPicker';
 import { PhotoField } from '../../src/components/PhotoField';
 import { deletePhoto } from '../../src/services/photos';
 import { t } from '../../src/i18n';
-import { colors, font, radius, space } from '../../src/theme';
+import { font, radius, space, useTheme } from '../../src/theme';
 
 type Params = { id?: string; familyId?: string; eventId?: string; direction?: Direction };
 
@@ -30,6 +30,7 @@ export default function EntryFormScreen() {
   const params = useLocalSearchParams<Params>();
   const router = useRouter();
   const { settings } = useSettings();
+  const { colors } = useTheme();
 
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -145,6 +146,7 @@ export default function EntryFormScreen() {
       <Stack.Screen
         options={{
           title: isEdit ? t.entry.editEntry : t.entry.newEntry,
+          headerLeft: () => <HeaderButton label={t.common.cancel} bold={false} onPress={() => router.back()} />,
           headerRight: () => <HeaderButton label={t.common.save} onPress={onSave} disabled={saving} />,
         }}
       />
@@ -178,19 +180,20 @@ export default function EntryFormScreen() {
               setAmountText(toMajorString(suggestion.basis.amountMinor, suggestion.basis.currency));
             }
           }}
-          style={{ backgroundColor: colors.surfaceAlt, borderColor: colors.accent, borderWidth: 1, borderRadius: radius.md, padding: space.md, marginBottom: space.lg }}
+          accessibilityRole="button"
+          style={({ pressed }) => ({ backgroundColor: colors.accentFill, borderRadius: radius.md, padding: space.lg, marginBottom: space.lg, opacity: pressed ? 0.7 : 1 })}
         >
           <Text style={[font.label, { color: colors.accent }]}>{t.entry.suggestionLabel}</Text>
-          <Text style={[font.bodyStrong, { marginTop: 2 }]}>
+          <Text style={[font.bodyStrong, { color: colors.text, marginTop: space.xs }]}>
             {suggestion.basis.kind === 'cash' && suggestion.basis.amountMinor != null
               ? formatMoney(suggestion.basis.amountMinor, suggestion.basis.currency)
               : suggestion.basis.itemDescription}
             {'  '}
-            <Text style={font.caption}>
+            <Text style={[font.caption, { color: colors.textMuted }]}>
               {suggestion.basis.event.name} · {formatISODate(suggestion.basis.event.date)}
             </Text>
           </Text>
-          {suggestion.basis.kind === 'cash' ? <Caption style={{ color: colors.primary, marginTop: 2 }}>{t.entry.useAmount} →</Caption> : null}
+          {suggestion.basis.kind === 'cash' ? <Caption style={{ color: colors.tint, fontWeight: '600', marginTop: space.xs }}>{t.entry.useAmount} →</Caption> : null}
         </Pressable>
       ) : null}
 
@@ -207,7 +210,7 @@ export default function EntryFormScreen() {
 
       {kind === 'item' ? (
         <Field label={t.entry.itemDescription} error={errors.item}>
-          <Input value={item} onChangeText={setItem} placeholder={t.entry.itemPlaceholder} autoCapitalize="sentences" />
+          <Input value={item} onChangeText={setItem} placeholder={t.entry.itemPlaceholder} invalid={!!errors.item} autoCapitalize="sentences" />
         </Field>
       ) : null}
 
@@ -215,6 +218,7 @@ export default function EntryFormScreen() {
         <View style={{ flexDirection: 'row', alignItems: 'center', gap: space.sm }}>
           <Text style={[font.money, { color: colors.textMuted }]}>{sym}</Text>
           <Input
+            invalid={!!errors.amount}
             value={amountText}
             onChangeText={setAmountText}
             keyboardType="decimal-pad"
@@ -239,12 +243,10 @@ export default function EntryFormScreen() {
 
       <Spacer />
       <Button label={t.common.save} onPress={onSave} loading={saving} disabled={saving} />
-      <Spacer h={8} />
-      <Button label={t.common.cancel} variant="ghost" onPress={() => router.back()} />
       {isEdit ? (
         <>
           <Spacer h={space.xl} />
-          <Button label={t.common.delete} variant="ghost" onPress={onDelete} style={{ alignSelf: 'center' }} />
+          <Button label={t.common.delete} variant="destructive" onPress={onDelete} />
         </>
       ) : null}
     </Screen>

@@ -1,22 +1,23 @@
 import React, { useMemo, useState } from 'react';
-import { Alert, Image, Pressable, Text, View } from 'react-native';
+import { Alert, Image, Pressable, View } from 'react-native';
 import { Stack, useLocalSearchParams, useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { deleteEvent, getEvent, listEntriesForEvent, listOutfitsForEvent } from '../../../src/db';
 import { totalsByCurrency } from '../../../src/domain/ledger';
 import { formatISODate } from '../../../src/domain/dates';
 import { useFocusedQuery } from '../../../src/hooks/useAsync';
-import { Body, Button, Caption, Card, EmptyState, Loading, Row, Screen, Section, Spacer } from '../../../src/components/ui';
+import { Button, Card, EmptyState, Group, HeaderIcon, Loading, Row, Screen, Section, Spacer, Txt } from '../../../src/components/ui';
 import { MoneyText } from '../../../src/components/MoneyText';
 import { EntryLine } from '../../../src/components/EntryLine';
 import { photoUri } from '../../../src/services/photos';
 import { exportEventPdf } from '../../../src/services/pdf';
 import { t } from '../../../src/i18n';
-import { colors, font, hit, radius, space } from '../../../src/theme';
+import { hit, radius, space, useTheme } from '../../../src/theme';
 
 export default function EventDetailScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const router = useRouter();
+  const { colors } = useTheme();
   const [exporting, setExporting] = useState(false);
 
   const q = useFocusedQuery(async () => {
@@ -63,45 +64,55 @@ export default function EventDetailScreen() {
           title: event.name,
           headerRight: () => (
             <Row>
-              <Pressable hitSlop={hit} onPress={onExport} disabled={exporting} accessibilityLabel={t.common.exportPdf}>
-                <Ionicons name="share-outline" size={24} color={colors.primary} />
-              </Pressable>
-              <Pressable hitSlop={hit} onPress={() => router.push({ pathname: '/event/form', params: { id } })} accessibilityLabel={t.common.edit}>
-                <Ionicons name="create-outline" size={24} color={colors.primary} />
-              </Pressable>
+              <HeaderIcon name="share-outline" label={t.common.exportPdf} onPress={onExport} disabled={exporting} />
+              <HeaderIcon name="create-outline" label={t.common.edit} onPress={() => router.push({ pathname: '/event/form', params: { id } })} />
             </Row>
           ),
         }}
       />
 
-      <Caption style={{ marginBottom: space.md }}>
-        {formatISODate(event.date)} · {t.eventTypes[event.type]}
-        {event.venue ? ` · ${event.venue}` : ''}
-      </Caption>
-      {event.hostFamilyName ? (
-        <Pressable onPress={() => router.push({ pathname: '/family/[id]', params: { id: event.hostFamilyId! } })} hitSlop={hit} style={{ marginBottom: space.md }}>
-          <Text style={[font.bodyStrong, { color: colors.primary }]}>{t.events.hostedBy(event.hostFamilyName)}</Text>
-        </Pressable>
-      ) : (
-        <Text style={[font.bodyStrong, { marginBottom: space.md }]}>{t.events.ourEvent}</Text>
-      )}
+      <View style={{ marginBottom: space.md, marginLeft: space.xs }}>
+        <Txt variant="subhead" tone="muted">
+          {formatISODate(event.date)} · {t.eventTypes[event.type]}
+          {event.venue ? ` · ${event.venue}` : ''}
+        </Txt>
+        {event.hostFamilyName ? (
+          <Pressable onPress={() => router.push({ pathname: '/family/[id]', params: { id: event.hostFamilyId! } })} hitSlop={hit} style={{ marginTop: space.xs }}>
+            <Txt variant="headline" tone="tint">
+              {t.events.hostedBy(event.hostFamilyName)}
+            </Txt>
+          </Pressable>
+        ) : (
+          <Txt variant="headline" style={{ marginTop: space.xs }}>
+            {t.events.ourEvent}
+          </Txt>
+        )}
+      </View>
 
       {/* Totals + actions */}
       <Card>
         {totals.length === 0 ? (
-          <Body muted>{t.event.giftsEmpty}</Body>
+          <Txt tone="muted">{t.event.giftsEmpty}</Txt>
         ) : (
           totals.map((tt, i) => (
-            <Row key={tt.currency} style={{ justifyContent: 'space-between', marginTop: i ? space.md : 0 }}>
+            <Row key={tt.currency} style={{ justifyContent: 'space-between', alignItems: 'flex-start', marginTop: i ? space.lg : 0 }}>
               <View>
-                <Caption>{t.event.totalReceived}</Caption>
+                <Txt variant="footnote" tone="muted">
+                  {t.event.totalReceived}
+                </Txt>
                 <MoneyText amountMinor={tt.receivedMinor} currency={tt.currency} direction="received" />
-                <Caption>{t.events.entries(tt.receivedCount)}</Caption>
+                <Txt variant="footnote" tone="muted">
+                  {t.events.entries(tt.receivedCount)}
+                </Txt>
               </View>
               <View style={{ alignItems: 'flex-end' }}>
-                <Caption>{t.event.totalGave}</Caption>
+                <Txt variant="footnote" tone="muted">
+                  {t.event.totalGave}
+                </Txt>
                 <MoneyText amountMinor={tt.gaveMinor} currency={tt.currency} direction="gave" />
-                <Caption>{t.events.entries(tt.gaveCount)}</Caption>
+                <Txt variant="footnote" tone="muted">
+                  {t.events.entries(tt.gaveCount)}
+                </Txt>
               </View>
             </Row>
           ))
@@ -109,13 +120,19 @@ export default function EventDetailScreen() {
         <Spacer h={space.lg} />
         {ours ? (
           <>
-            <Button label={t.event.quickAdd} onPress={() => router.push({ pathname: '/event/[id]/quick-add', params: { id } })} />
-            <Caption style={{ textAlign: 'center', marginTop: space.xs }}>{t.event.quickAddHint}</Caption>
-            <Spacer h={space.sm} />
-            <Button label={t.event.addGift} variant="secondary" onPress={() => router.push({ pathname: '/entry/form', params: { eventId: id } })} />
+            <Button label={t.event.quickAdd} icon="flash" onPress={() => router.push({ pathname: '/event/[id]/quick-add', params: { id } })} />
+            <Txt variant="footnote" tone="muted" style={{ textAlign: 'center', marginTop: space.xs }}>
+              {t.event.quickAddHint}
+            </Txt>
+            <Spacer h={space.md} />
+            <Button label={t.event.addGift} icon="add" variant="secondary" onPress={() => router.push({ pathname: '/entry/form', params: { eventId: id } })} />
           </>
         ) : (
-          <Button label={t.event.addGift} onPress={() => router.push({ pathname: '/entry/form', params: { eventId: id, familyId: event.hostFamilyId!, direction: 'gave' } })} />
+          <Button
+            label={t.event.addGift}
+            icon="add"
+            onPress={() => router.push({ pathname: '/entry/form', params: { eventId: id, familyId: event.hostFamilyId!, direction: 'gave' } })}
+          />
         )}
       </Card>
 
@@ -123,45 +140,64 @@ export default function EventDetailScreen() {
 
       <Section title={t.event.gifts}>
         {q.data!.entries.length === 0 ? (
-          <Body muted>{t.event.giftsEmpty}</Body>
+          <Txt tone="muted" style={{ marginLeft: space.lg }}>
+            {t.event.giftsEmpty}
+          </Txt>
         ) : (
-          q.data!.entries.map((e) => (
-            <EntryLine key={e.id} entry={e} subtitle={e.family.name} onPress={() => router.push({ pathname: '/entry/form', params: { id: e.id } })} />
-          ))
+          <Group>
+            {q.data!.entries.map((e) => (
+              <EntryLine key={e.id} entry={e} subtitle={e.family.name} onPress={() => router.push({ pathname: '/entry/form', params: { id: e.id } })} />
+            ))}
+          </Group>
         )}
       </Section>
 
       <Section
         title={t.event.outfits}
         right={
-          <Pressable hitSlop={hit} onPress={() => router.push({ pathname: '/outfit/form', params: { eventId: id } })}>
-            <Text style={[font.caption, { color: colors.primary, fontWeight: '700' }]}>＋ {t.event.addOutfit}</Text>
+          <Pressable hitSlop={hit} accessibilityRole="button" onPress={() => router.push({ pathname: '/outfit/form', params: { eventId: id } })}>
+            <Txt variant="subhead" tone="tint" style={{ fontWeight: '600' }}>
+              ＋ {t.event.addOutfit}
+            </Txt>
           </Pressable>
         }
       >
         {q.data!.outfits.length === 0 ? (
-          <Body muted>{t.event.outfitsEmpty}</Body>
+          <Txt tone="muted" style={{ marginLeft: space.lg }}>
+            {t.event.outfitsEmpty}
+          </Txt>
         ) : (
           <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: space.md }}>
             {q.data!.outfits.map((o) => (
-              <Pressable key={o.id} onPress={() => router.push({ pathname: '/outfit/form', params: { id: o.id, eventId: id } })} style={{ width: '47%' }}>
+              <Pressable
+                key={o.id}
+                onPress={() => router.push({ pathname: '/outfit/form', params: { id: o.id, eventId: id } })}
+                style={({ pressed }) => ({ width: '47%', opacity: pressed ? 0.7 : 1 })}
+              >
                 {o.photoPath ? (
-                  <Image source={{ uri: photoUri(o.photoPath)! }} style={{ width: '100%', aspectRatio: 3 / 4, borderRadius: radius.md, backgroundColor: colors.chipBg }} />
+                  <Image source={{ uri: photoUri(o.photoPath)! }} style={{ width: '100%', aspectRatio: 3 / 4, borderRadius: radius.md, backgroundColor: colors.surfaceAlt }} />
                 ) : (
-                  <View style={{ width: '100%', aspectRatio: 3 / 4, borderRadius: radius.md, backgroundColor: colors.chipBg, alignItems: 'center', justifyContent: 'center' }}>
+                  <View style={{ width: '100%', aspectRatio: 3 / 4, borderRadius: radius.md, backgroundColor: colors.surfaceAlt, alignItems: 'center', justifyContent: 'center' }}>
                     <Ionicons name="shirt-outline" size={36} color={colors.textMuted} />
                   </View>
                 )}
-                <Text style={[font.bodyStrong, { marginTop: space.xs }]}>{o.personLabel}</Text>
-                {o.note ? <Caption>{o.note}</Caption> : null}
+                <Txt variant="bodyStrong" style={{ marginTop: space.xs }}>
+                  {o.personLabel}
+                </Txt>
+                {o.note ? (
+                  <Txt variant="subhead" tone="muted">
+                    {o.note}
+                  </Txt>
+                ) : null}
               </Pressable>
             ))}
           </View>
         )}
       </Section>
 
-      <Spacer h={space.xl} />
-      <Button label={t.common.delete} variant="ghost" onPress={onDelete} style={{ alignSelf: 'center' }} />
+      <Card style={{ padding: 0 }}>
+        <Button label={t.common.delete} variant="destructive" onPress={onDelete} />
+      </Card>
     </Screen>
   );
 }

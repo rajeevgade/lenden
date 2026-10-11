@@ -1,15 +1,17 @@
 import React, { useEffect, useState } from 'react';
 import { Stack } from 'expo-router';
+import { DarkTheme, DefaultTheme, ThemeProvider } from '@react-navigation/native';
 import { StatusBar } from 'expo-status-bar';
 import { View, Text } from 'react-native';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { getDb } from '../src/db';
 import { SettingsProvider } from '../src/hooks/useSettings';
-import { colors, font } from '../src/theme';
+import { font, useTheme } from '../src/theme';
 import { t } from '../src/i18n';
 import { Loading } from '../src/components/ui';
 
 export default function RootLayout() {
+  const { colors, dark } = useTheme();
   const [ready, setReady] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -22,8 +24,8 @@ export default function RootLayout() {
   if (error) {
     return (
       <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center', padding: 24, backgroundColor: colors.bg }}>
-        <Text style={font.h2}>{t.common.error}</Text>
-        <Text style={font.caption}>{error}</Text>
+        <Text style={[font.h2, { color: colors.text }]}>{t.common.error}</Text>
+        <Text style={[font.caption, { color: colors.textMuted }]}>{error}</Text>
       </View>
     );
   }
@@ -35,30 +37,39 @@ export default function RootLayout() {
     );
   }
 
+  // Navigation theme drives native header/tab chrome and modal backdrops; our palette fills it in.
+  const base = dark ? DarkTheme : DefaultTheme;
+  const navTheme = {
+    ...base,
+    colors: { ...base.colors, primary: colors.tint, background: colors.bg, card: colors.bg, text: colors.text, border: colors.separator },
+  };
+
   return (
     <SafeAreaProvider>
-      <SettingsProvider>
-        <StatusBar style="dark" />
-        <Stack
-          screenOptions={{
-            headerStyle: { backgroundColor: colors.bg },
-            headerTintColor: colors.primary,
-            headerTitleStyle: { color: colors.text, fontWeight: '700' },
-            headerShadowVisible: false,
-            headerBackButtonDisplayMode: 'minimal',
-            contentStyle: { backgroundColor: colors.bg },
-          }}
-        >
-          <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
-          <Stack.Screen name="family/[id]" options={{ title: '' }} />
-          <Stack.Screen name="family/form" options={{ presentation: 'modal', title: t.families.newFamily }} />
-          <Stack.Screen name="event/[id]/index" options={{ title: '' }} />
-          <Stack.Screen name="event/form" options={{ presentation: 'modal', title: t.events.newEvent }} />
-          <Stack.Screen name="event/[id]/quick-add" options={{ presentation: 'fullScreenModal', title: t.quickAdd.title }} />
-          <Stack.Screen name="entry/form" options={{ presentation: 'modal', title: t.entry.newEntry }} />
-          <Stack.Screen name="outfit/form" options={{ presentation: 'modal', title: t.outfit.newOutfit }} />
-        </Stack>
-      </SettingsProvider>
+      <ThemeProvider value={navTheme}>
+        <SettingsProvider>
+          <StatusBar style="auto" />
+          <Stack
+            screenOptions={{
+              headerStyle: { backgroundColor: colors.bg },
+              headerTintColor: colors.tint,
+              headerTitleStyle: { color: colors.text, fontWeight: '600' },
+              headerShadowVisible: false,
+              headerBackButtonDisplayMode: 'minimal',
+              contentStyle: { backgroundColor: colors.bg },
+            }}
+          >
+            <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
+            <Stack.Screen name="family/[id]" options={{ title: '' }} />
+            <Stack.Screen name="family/form" options={{ presentation: 'modal', title: t.families.newFamily }} />
+            <Stack.Screen name="event/[id]/index" options={{ title: '' }} />
+            <Stack.Screen name="event/form" options={{ presentation: 'modal', title: t.events.newEvent }} />
+            <Stack.Screen name="event/[id]/quick-add" options={{ presentation: 'fullScreenModal', title: t.quickAdd.title }} />
+            <Stack.Screen name="entry/form" options={{ presentation: 'modal', title: t.entry.newEntry }} />
+            <Stack.Screen name="outfit/form" options={{ presentation: 'modal', title: t.outfit.newOutfit }} />
+          </Stack>
+        </SettingsProvider>
+      </ThemeProvider>
     </SafeAreaProvider>
   );
 }

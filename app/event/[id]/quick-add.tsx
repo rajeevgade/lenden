@@ -1,22 +1,23 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { Alert, KeyboardAvoidingView, Platform, Pressable, ScrollView, Text, TextInput, View } from 'react-native';
+import { Alert, KeyboardAvoidingView, Platform, Pressable, ScrollView, TextInput, View } from 'react-native';
 import { Stack, useLocalSearchParams, useRouter } from 'expo-router';
 import * as Haptics from 'expo-haptics';
 import { createEntry, getEvent, listEntriesForEvent, type EventListItem } from '../../../src/db';
 import type { Direction, EntryKind, EntryWithFamily, Family } from '../../../src/domain/types';
 import { currencyInfo, parseMoney } from '../../../src/domain/money';
 import { useSettings } from '../../../src/hooks/useSettings';
-import { Button, Caption, Input, Loading, Spacer } from '../../../src/components/ui';
+import { Button, Group, HeaderButton, Input, Loading, Section, Spacer, Txt } from '../../../src/components/ui';
 import { FamilyPicker } from '../../../src/components/FamilyPicker';
 import { EntryLine } from '../../../src/components/EntryLine';
 import { t } from '../../../src/i18n';
-import { colors, font, radius, space } from '../../../src/theme';
+import { font, hit, radius, space, useTheme } from '../../../src/theme';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 export default function QuickAddScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const router = useRouter();
   const { settings } = useSettings();
+  const { colors } = useTheme();
 
   const [event, setEvent] = useState<EventListItem | null>(null);
   const [family, setFamily] = useState<Family | null>(null);
@@ -87,25 +88,25 @@ export default function QuickAddScreen() {
 
   if (!event) return <Loading />;
 
+  const dirColor = direction === 'gave' ? colors.gave : colors.received;
+
   return (
     <SafeAreaView style={{ flex: 1, backgroundColor: colors.bg }} edges={['bottom']}>
       <Stack.Screen
         options={{
           title: t.quickAdd.title,
-          headerRight: () => (
-            <Pressable onPress={() => router.back()} hitSlop={12}>
-              <Text style={[font.bodyStrong, { color: colors.primary }]}>{t.common.done}</Text>
-            </Pressable>
-          ),
+          headerRight: () => <HeaderButton label={t.common.done} onPress={() => router.back()} />,
         }}
       />
       <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === 'ios' ? 'padding' : undefined} keyboardVerticalOffset={90}>
         <ScrollView contentContainerStyle={{ padding: space.lg }} keyboardShouldPersistTaps="handled">
-          <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
-            <Text style={[font.caption, { flex: 1 }]} numberOfLines={1}>
+          <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingHorizontal: space.xs }}>
+            <Txt variant="subhead" tone="muted" style={{ flex: 1 }} numberOfLines={1}>
               {t.quickAdd.receivedAt(event.name)}
-            </Text>
-            <Text style={[font.caption, { color: colors.primary, fontWeight: '700' }]}>{t.quickAdd.saved(savedCount)}</Text>
+            </Txt>
+            <Txt variant="subhead" tone="tint" style={{ fontWeight: '700' }}>
+              {t.quickAdd.saved(savedCount)}
+            </Txt>
           </View>
           <Spacer />
 
@@ -115,12 +116,12 @@ export default function QuickAddScreen() {
               borderRadius: radius.lg,
               padding: space.lg,
               borderWidth: 2,
-              borderColor: direction === 'gave' ? colors.gave : colors.received,
+              borderColor: dirColor,
             }}
           >
-            <Text style={[font.label, { color: direction === 'gave' ? colors.gave : colors.received, marginBottom: space.sm }]}>
+            <Txt variant="label" style={{ color: dirColor, marginBottom: space.sm }}>
               {direction === 'gave' ? t.direction.gave : t.direction.received}
-            </Text>
+            </Txt>
 
             <FamilyPicker
               value={family}
@@ -136,7 +137,7 @@ export default function QuickAddScreen() {
 
             {kind === 'cash' ? (
               <View style={{ flexDirection: 'row', alignItems: 'center', gap: space.sm }}>
-                <Text style={[font.bigMoney, { color: colors.textMuted }]}>{currencyInfo(currency).symbol}</Text>
+                <Txt style={[font.bigMoney, { color: colors.textMuted }]}>{currencyInfo(currency).symbol}</Txt>
                 <Input
                   ref={amountInput}
                   value={amountText}
@@ -145,25 +146,45 @@ export default function QuickAddScreen() {
                   placeholder={t.quickAdd.amountPlaceholder}
                   returnKeyType="done"
                   onSubmitEditing={onSave}
-                  style={{ flex: 1, fontSize: 36, fontWeight: '700', minHeight: 64 }}
+                  style={{ flex: 1, fontSize: 36, fontWeight: '700', minHeight: 64, backgroundColor: colors.bg }}
                 />
               </View>
             ) : (
-              <Input ref={amountInput} value={item} onChangeText={setItem} placeholder={t.entry.itemPlaceholder} returnKeyType="done" onSubmitEditing={onSave} autoCapitalize="sentences" />
+              <Input
+                ref={amountInput}
+                value={item}
+                onChangeText={setItem}
+                placeholder={t.entry.itemPlaceholder}
+                returnKeyType="done"
+                onSubmitEditing={onSave}
+                autoCapitalize="sentences"
+                style={{ backgroundColor: colors.bg }}
+              />
             )}
             <Spacer h={space.sm} />
-            <Input value={note} onChangeText={setNote} placeholder={t.entry.notePlaceholder} returnKeyType="done" onSubmitEditing={onSave} style={{ minHeight: 44, fontSize: 16 }} />
+            <Input
+              value={note}
+              onChangeText={setNote}
+              placeholder={t.entry.notePlaceholder}
+              returnKeyType="done"
+              onSubmitEditing={onSave}
+              style={{ minHeight: 44, fontSize: 16, backgroundColor: colors.bg }}
+            />
 
-            {error ? <Text style={{ color: colors.danger, marginTop: space.sm }}>{error}</Text> : null}
+            {error ? <Txt variant="subhead" tone="danger" style={{ marginTop: space.sm }}>{error}</Txt> : null}
             <Spacer h={space.md} />
             <Button label={t.quickAdd.saveNext} onPress={onSave} loading={saving} disabled={saving} style={{ minHeight: 60 }} />
 
             <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginTop: space.md }}>
-              <Pressable onPress={() => setKind((k) => (k === 'cash' ? 'item' : 'cash'))} hitSlop={8}>
-                <Caption style={{ color: colors.primary }}>{kind === 'cash' ? t.quickAdd.itemInstead : t.quickAdd.cashInstead}</Caption>
+              <Pressable onPress={() => setKind((k) => (k === 'cash' ? 'item' : 'cash'))} hitSlop={hit}>
+                <Txt variant="subhead" tone="tint">
+                  {kind === 'cash' ? t.quickAdd.itemInstead : t.quickAdd.cashInstead}
+                </Txt>
               </Pressable>
-              <Pressable onPress={() => setDirection((d) => (d === 'gave' ? 'received' : 'gave'))} hitSlop={8}>
-                <Caption style={{ color: colors.primary }}>{direction === 'gave' ? t.quickAdd.switchToReceived : t.quickAdd.switchToGave}</Caption>
+              <Pressable onPress={() => setDirection((d) => (d === 'gave' ? 'received' : 'gave'))} hitSlop={hit}>
+                <Txt variant="subhead" tone="tint">
+                  {direction === 'gave' ? t.quickAdd.switchToReceived : t.quickAdd.switchToGave}
+                </Txt>
               </Pressable>
             </View>
           </View>
@@ -171,10 +192,13 @@ export default function QuickAddScreen() {
           {recent.length ? (
             <>
               <Spacer h={space.xl} />
-              <Text style={[font.label, { marginBottom: space.sm }]}>{t.quickAdd.recent}</Text>
-              {recent.map((e) => (
-                <EntryLine key={e.id} entry={e} subtitle={e.family.name} onPress={() => router.push({ pathname: '/entry/form', params: { id: e.id } })} />
-              ))}
+              <Section title={t.quickAdd.recent}>
+                <Group>
+                  {recent.map((e) => (
+                    <EntryLine key={e.id} entry={e} subtitle={e.family.name} onPress={() => router.push({ pathname: '/entry/form', params: { id: e.id } })} />
+                  ))}
+                </Group>
+              </Section>
             </>
           ) : null}
         </ScrollView>

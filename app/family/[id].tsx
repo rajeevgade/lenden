@@ -1,5 +1,5 @@
 import React, { useMemo, useState } from 'react';
-import { Alert, Image, Pressable, Text, View } from 'react-native';
+import { Alert, Image, Pressable, View } from 'react-native';
 import { Stack, useLocalSearchParams, useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { deleteFamily, getFamily, listEntriesForFamily, listEventsHostedBy, listOutfitsForHostFamily } from '../../src/db';
@@ -7,17 +7,18 @@ import { groupByEvent, suggestGift, totalsByCurrency } from '../../src/domain/le
 import { formatISODate } from '../../src/domain/dates';
 import { formatMoney } from '../../src/domain/money';
 import { useFocusedQuery } from '../../src/hooks/useAsync';
-import { Body, Button, Caption, Card, EmptyState, Loading, Row, Screen, Section, Spacer } from '../../src/components/ui';
+import { Button, Card, EmptyState, Group, HeaderIcon, ListRow, Loading, Row, Screen, Section, Separator, Spacer, Txt } from '../../src/components/ui';
 import { MoneyText } from '../../src/components/MoneyText';
 import { EntryLine } from '../../src/components/EntryLine';
 import { photoUri } from '../../src/services/photos';
 import { exportFamilyLedgerPdf } from '../../src/services/pdf';
 import { t } from '../../src/i18n';
-import { colors, font, hit, radius, space } from '../../src/theme';
+import { hit, radius, space, useTheme } from '../../src/theme';
 
 export default function FamilyDetailScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const router = useRouter();
+  const { colors } = useTheme();
   const [exporting, setExporting] = useState(false);
 
   const q = useFocusedQuery(async () => {
@@ -70,39 +71,47 @@ export default function FamilyDetailScreen() {
           title: family.name,
           headerRight: () => (
             <Row>
-              <Pressable hitSlop={hit} onPress={onExport} disabled={exporting} accessibilityLabel={t.common.exportPdf}>
-                <Ionicons name="share-outline" size={24} color={colors.primary} />
-              </Pressable>
-              <Pressable hitSlop={hit} onPress={() => router.push({ pathname: '/family/form', params: { id } })} accessibilityLabel={t.common.edit}>
-                <Ionicons name="create-outline" size={24} color={colors.primary} />
-              </Pressable>
+              <HeaderIcon name="share-outline" label={t.common.exportPdf} onPress={onExport} disabled={exporting} />
+              <HeaderIcon name="create-outline" label={t.common.edit} onPress={() => router.push({ pathname: '/family/form', params: { id } })} />
             </Row>
           ),
         }}
       />
 
-      {family.relation || family.city ? <Caption style={{ marginBottom: space.md }}>{[family.relation, family.city].filter(Boolean).join(' · ')}</Caption> : null}
+      {family.relation || family.city ? (
+        <Txt variant="subhead" tone="muted" style={{ marginBottom: space.md, marginLeft: space.xs }}>
+          {[family.relation, family.city].filter(Boolean).join(' · ')}
+        </Txt>
+      ) : null}
 
       {/* Totals */}
       <Card>
         {totals.length === 0 ? (
-          <Body muted>{t.family.ledgerEmpty}</Body>
+          <Txt tone="muted">{t.family.ledgerEmpty}</Txt>
         ) : (
           totals.map((tt, i) => (
-            <View key={tt.currency} style={{ marginTop: i ? space.lg : 0 }}>
-              <Row style={{ justifyContent: 'space-between' }}>
+            <View key={tt.currency} style={{ marginTop: i ? space.xl : 0 }}>
+              <Row style={{ justifyContent: 'space-between', alignItems: 'flex-start' }}>
                 <View>
-                  <Caption>{t.family.totalsReceived}</Caption>
+                  <Txt variant="footnote" tone="muted">
+                    {t.family.totalsReceived}
+                  </Txt>
                   <MoneyText amountMinor={tt.receivedMinor} currency={tt.currency} direction="received" />
                 </View>
                 <View style={{ alignItems: 'flex-end' }}>
-                  <Caption>{t.family.totalsGave}</Caption>
+                  <Txt variant="footnote" tone="muted">
+                    {t.family.totalsGave}
+                  </Txt>
                   <MoneyText amountMinor={tt.gaveMinor} currency={tt.currency} direction="gave" />
                 </View>
               </Row>
-              <View style={{ height: 1, backgroundColor: colors.border, marginVertical: space.md }} />
+              <View style={{ marginVertical: space.md }}>
+                <Separator inset={0} />
+              </View>
               <Row style={{ justifyContent: 'space-between' }}>
-                <Caption>{tt.netMinor > 0 ? t.family.netAhead : tt.netMinor < 0 ? t.family.netBehind : t.family.netEven}</Caption>
+                <Txt variant="subhead" tone="muted">
+                  {tt.netMinor > 0 ? t.family.netAhead : tt.netMinor < 0 ? t.family.netBehind : t.family.netEven}
+                </Txt>
                 <MoneyText amountMinor={tt.netMinor} currency={tt.currency} showPlus />
               </Row>
             </View>
@@ -113,11 +122,16 @@ export default function FamilyDetailScreen() {
       <Spacer h={space.lg} />
 
       {/* Suggestion */}
-      <Card style={{ backgroundColor: colors.surfaceAlt, borderColor: colors.accent }}>
-        <Text style={[font.label, { color: colors.accent }]}>{t.family.suggestTitle}</Text>
-        <Spacer h={space.xs} />
+      <Card style={{ backgroundColor: colors.accentFill }}>
+        <Row>
+          <Ionicons name="bulb-outline" size={16} color={colors.accent} />
+          <Txt variant="label" tone="accent">
+            {t.family.suggestTitle}
+          </Txt>
+        </Row>
+        <Spacer h={space.sm} />
         {suggestion ? (
-          <Body>
+          <Txt>
             {t.family.suggestBody(
               suggestion.basis.kind === 'cash' && suggestion.basis.amountMinor != null
                 ? formatMoney(suggestion.basis.amountMinor, suggestion.basis.currency)
@@ -125,33 +139,44 @@ export default function FamilyDetailScreen() {
               suggestion.basis.event.name,
               formatISODate(suggestion.basis.event.date),
             )}
-          </Body>
+          </Txt>
         ) : (
-          <Body muted>{t.family.suggestNoHistory}</Body>
+          <Txt tone="muted">{t.family.suggestNoHistory}</Txt>
         )}
-        <Spacer />
-        <Button label={t.family.addGift} onPress={() => router.push({ pathname: '/entry/form', params: { familyId: id } })} />
+        <Spacer h={space.lg} />
+        <Button label={t.family.addGift} icon="add" onPress={() => router.push({ pathname: '/entry/form', params: { familyId: id } })} />
       </Card>
 
       <Spacer h={space.xl} />
 
-      {/* Ledger */}
+      {/* Ledger: one group per event */}
       <Section title={t.family.ledger}>
         {groups.length === 0 ? (
-          <Body muted>{t.family.ledgerEmpty}</Body>
+          <Txt tone="muted" style={{ marginLeft: space.lg }}>
+            {t.family.ledgerEmpty}
+          </Txt>
         ) : (
-          groups.map((g) => (
-            <View key={g.event.id} style={{ marginBottom: space.lg }}>
-              <Pressable onPress={() => router.push({ pathname: '/event/[id]', params: { id: g.event.id } })} hitSlop={hit}>
-                <Text style={font.bodyStrong}>{g.event.name}</Text>
-                <Caption>
-                  {formatISODate(g.event.date)} · {t.eventTypes[g.event.type]}
-                </Caption>
+          groups.map((g, i) => (
+            <View key={g.event.id} style={{ marginTop: i ? space.lg : 0 }}>
+              <Pressable
+                onPress={() => router.push({ pathname: '/event/[id]', params: { id: g.event.id } })}
+                hitSlop={hit}
+                accessibilityRole="button"
+                style={({ pressed }) => ({ flexDirection: 'row', alignItems: 'center', paddingHorizontal: space.lg, marginBottom: space.sm, opacity: pressed ? 0.6 : 1 })}
+              >
+                <View style={{ flex: 1 }}>
+                  <Txt variant="headline">{g.event.name}</Txt>
+                  <Txt variant="footnote" tone="muted">
+                    {formatISODate(g.event.date)} · {t.eventTypes[g.event.type]}
+                  </Txt>
+                </View>
+                <Ionicons name="chevron-forward" size={16} color={colors.textTertiary} />
               </Pressable>
-              <Spacer h={space.sm} />
-              {g.entries.map((e) => (
-                <EntryLine key={e.id} entry={e} onPress={() => router.push({ pathname: '/entry/form', params: { id: e.id } })} />
-              ))}
+              <Group>
+                {g.entries.map((e) => (
+                  <EntryLine key={e.id} entry={e} onPress={() => router.push({ pathname: '/entry/form', params: { id: e.id } })} />
+                ))}
+              </Group>
             </View>
           ))
         )}
@@ -160,31 +185,31 @@ export default function FamilyDetailScreen() {
       {/* Outfits worn to their functions */}
       {q.data && q.data.outfits.length > 0 ? (
         <Section title={t.family.outfits}>
-          {q.data.outfits.map((o) => (
-            <Pressable
-              key={o.id}
-              onPress={() => router.push({ pathname: '/outfit/form', params: { id: o.id, eventId: o.eventId } })}
-              style={{ flexDirection: 'row', gap: space.md, alignItems: 'center', marginBottom: space.md }}
-            >
-              {o.photoPath ? (
-                <Image source={{ uri: photoUri(o.photoPath)! }} style={{ width: 64, height: 64, borderRadius: radius.md, backgroundColor: colors.chipBg }} />
-              ) : (
-                <View style={{ width: 64, height: 64, borderRadius: radius.md, backgroundColor: colors.chipBg }} />
-              )}
-              <View style={{ flex: 1 }}>
-                <Text style={font.bodyStrong}>{o.personLabel}</Text>
-                {o.note ? <Caption>{o.note}</Caption> : null}
-                <Caption>
-                  {o.eventName} · {formatISODate(o.eventDate)}
-                </Caption>
-              </View>
-            </Pressable>
-          ))}
+          <Group>
+            {q.data.outfits.map((o) => (
+              <ListRow
+                key={o.id}
+                title={o.personLabel}
+                subtitle={[o.note, `${o.eventName} · ${formatISODate(o.eventDate)}`].filter(Boolean).join(' · ')}
+                left={
+                  o.photoPath ? (
+                    <Image source={{ uri: photoUri(o.photoPath)! }} style={{ width: 56, height: 56, marginVertical: space.sm, borderRadius: radius.sm, backgroundColor: colors.surfaceAlt }} />
+                  ) : (
+                    <View style={{ width: 56, height: 56, marginVertical: space.sm, borderRadius: radius.sm, backgroundColor: colors.surfaceAlt, alignItems: 'center', justifyContent: 'center' }}>
+                      <Ionicons name="shirt-outline" size={24} color={colors.textMuted} />
+                    </View>
+                  )
+                }
+                onPress={() => router.push({ pathname: '/outfit/form', params: { id: o.id, eventId: o.eventId } })}
+              />
+            ))}
+          </Group>
         </Section>
       ) : null}
 
-      <Spacer h={space.xl} />
-      <Button label={t.common.delete} variant="ghost" onPress={onDelete} style={{ alignSelf: 'center' }} />
+      <Card style={{ padding: 0 }}>
+        <Button label={t.common.delete} variant="destructive" onPress={onDelete} />
+      </Card>
     </Screen>
   );
 }

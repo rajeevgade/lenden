@@ -1,9 +1,10 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { Pressable, Text, View, type TextInput } from 'react-native';
+import { Pressable, StyleSheet, Text, View, type TextInput } from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
 import { createFamily, searchFamilies } from '../db';
 import type { Family } from '../domain/types';
 import { t } from '../i18n';
-import { colors, font, radius, space } from '../theme';
+import { font, radius, space, useTheme } from '../theme';
 import { Input } from './ui';
 
 /**
@@ -31,6 +32,7 @@ export function FamilyPicker({
   const [results, setResults] = useState<Family[]>([]);
   const [open, setOpen] = useState(false);
   const seq = useRef(0);
+  const { colors } = useTheme();
 
   useEffect(() => {
     setText(value?.name ?? '');
@@ -81,19 +83,45 @@ export function FamilyPicker({
           else if (!value && showCreate) void onCreate();
           onSubmitEditing?.();
         }}
-        style={value ? { borderColor: colors.primary, borderWidth: 2 } : undefined}
+        style={value ? { borderColor: colors.tint, borderWidth: 2, paddingRight: 44 } : undefined}
       />
+      {value ? (
+        <View pointerEvents="none" style={{ position: 'absolute', right: space.md, top: 0, bottom: 0, justifyContent: 'center' }}>
+          <Ionicons name="checkmark-circle" size={22} color={colors.tint} />
+        </View>
+      ) : null}
       {open && !value && (results.length > 0 || showCreate) ? (
-        <View style={{ backgroundColor: colors.surface, borderRadius: radius.md, borderWidth: 1, borderColor: colors.border, marginTop: space.xs, overflow: 'hidden' }}>
-          {results.map((f) => (
-            <Pressable key={f.id} onPress={() => select(f)} style={({ pressed }) => ({ padding: space.md, backgroundColor: pressed ? colors.surfaceAlt : 'transparent', borderBottomWidth: 1, borderBottomColor: colors.border })}>
-              <Text style={font.bodyStrong}>{f.name}</Text>
-              {f.city || f.relation ? <Text style={font.caption}>{[f.relation, f.city].filter(Boolean).join(' · ')}</Text> : null}
+        <View style={{ backgroundColor: colors.surface, borderRadius: radius.md, marginTop: space.xs, overflow: 'hidden' }}>
+          {results.map((f, i) => (
+            <Pressable
+              key={f.id}
+              onPress={() => select(f)}
+              style={({ pressed }) => ({
+                paddingVertical: space.md,
+                paddingHorizontal: space.lg,
+                backgroundColor: pressed ? colors.surfaceAlt : 'transparent',
+                borderBottomWidth: i < results.length - 1 || showCreate ? StyleSheet.hairlineWidth : 0,
+                borderBottomColor: colors.separator,
+              })}
+            >
+              <Text style={[font.bodyStrong, { color: colors.text }]}>{f.name}</Text>
+              {f.city || f.relation ? <Text style={[font.subhead, { color: colors.textMuted }]}>{[f.relation, f.city].filter(Boolean).join(' · ')}</Text> : null}
             </Pressable>
           ))}
           {showCreate ? (
-            <Pressable onPress={onCreate} style={({ pressed }) => ({ padding: space.md, backgroundColor: pressed ? colors.surfaceAlt : 'transparent' })}>
-              <Text style={[font.bodyStrong, { color: colors.primary }]}>{t.entry.createFamily(trimmed)}</Text>
+            <Pressable
+              onPress={onCreate}
+              style={({ pressed }) => ({
+                flexDirection: 'row',
+                alignItems: 'center',
+                gap: space.sm,
+                paddingVertical: space.md,
+                paddingHorizontal: space.lg,
+                backgroundColor: pressed ? colors.surfaceAlt : 'transparent',
+              })}
+            >
+              <Ionicons name="add-circle-outline" size={22} color={colors.tint} />
+              <Text style={[font.bodyStrong, { color: colors.tint, flex: 1 }]}>{t.entry.createFamily(trimmed)}</Text>
             </Pressable>
           ) : null}
         </View>

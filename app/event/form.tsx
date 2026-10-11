@@ -8,11 +8,13 @@ import { formatISODate, isValidISODate, todayISO } from '../../src/domain/dates'
 import { Button, Chip, ChipRow, Field, HeaderButton, Input, Loading, Screen, Segmented, Spacer } from '../../src/components/ui';
 import { FamilyPicker } from '../../src/components/FamilyPicker';
 import { t } from '../../src/i18n';
-import { colors, font, radius, space } from '../../src/theme';
+import { Ionicons } from '@expo/vector-icons';
+import { font, radius, space, useTheme } from '../../src/theme';
 
 export default function EventFormScreen() {
   const { id, hostFamilyId } = useLocalSearchParams<{ id?: string; hostFamilyId?: string }>();
   const router = useRouter();
+  const { colors, dark } = useTheme();
   const [loading, setLoading] = useState(!!id || !!hostFamilyId);
   const [saving, setSaving] = useState(false);
   const [name, setName] = useState('');
@@ -79,6 +81,7 @@ export default function EventFormScreen() {
       <Stack.Screen
         options={{
           title: id ? t.events.editEvent : t.events.newEvent,
+          headerLeft: () => <HeaderButton label={t.common.cancel} bold={false} onPress={() => router.back()} />,
           headerRight: () => <HeaderButton label={t.common.save} onPress={onSave} disabled={saving} />,
         }}
       />
@@ -88,20 +91,20 @@ export default function EventFormScreen() {
           value={hostMode}
           options={[
             { value: 'us', label: t.events.hostUs },
-            { value: 'them', label: t.events.hostPlaceholder },
+            { value: 'them', label: t.events.hostThem },
           ]}
           onChange={setHostMode}
         />
         {hostMode === 'them' ? (
           <>
             <Spacer h={space.sm} />
-            <FamilyPicker value={host} onChange={setHost} />
+            <FamilyPicker value={host} onChange={setHost} placeholder={t.events.hostPlaceholder} />
           </>
         ) : null}
       </Field>
 
       <Field label={t.events.name} error={errors.name}>
-        <Input value={name} onChangeText={setName} placeholder={t.events.namePlaceholder} autoCapitalize="sentences" />
+        <Input value={name} onChangeText={setName} placeholder={t.events.namePlaceholder} invalid={!!errors.name} autoCapitalize="sentences" />
       </Field>
 
       <Field label={t.events.type}>
@@ -115,15 +118,29 @@ export default function EventFormScreen() {
       <Field label={t.events.date} error={errors.date}>
         <Pressable
           onPress={() => setShowPicker(true)}
-          style={{ backgroundColor: colors.surface, borderWidth: 1, borderColor: colors.border, borderRadius: radius.md, minHeight: 52, justifyContent: 'center', paddingHorizontal: space.md }}
+          accessibilityRole="button"
+          style={{
+            backgroundColor: colors.surface,
+            borderWidth: 1,
+            borderColor: errors.date ? colors.danger : 'transparent',
+            borderRadius: radius.md,
+            minHeight: 52,
+            flexDirection: 'row',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            paddingHorizontal: space.lg,
+          }}
         >
-          <Text style={font.body}>{formatISODate(date)}</Text>
+          <Text style={[font.body, { color: colors.text }]}>{formatISODate(date)}</Text>
+          <Ionicons name="calendar-outline" size={22} color={colors.tint} />
         </Pressable>
         {showPicker ? (
           <DateTimePicker
             value={dateObj}
             mode="date"
             display={Platform.OS === 'ios' ? 'inline' : 'default'}
+            themeVariant={dark ? 'dark' : 'light'}
+            accentColor={colors.tint}
             onChange={(ev, d) => {
               if (Platform.OS !== 'ios') setShowPicker(false);
               if (ev.type === 'dismissed' || !d) return;
@@ -143,8 +160,6 @@ export default function EventFormScreen() {
 
       <Spacer />
       <Button label={t.common.save} onPress={onSave} loading={saving} disabled={saving} />
-      <Spacer h={8} />
-      <Button label={t.common.cancel} variant="ghost" onPress={() => router.back()} />
     </Screen>
   );
 }

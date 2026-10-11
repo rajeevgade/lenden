@@ -3,10 +3,11 @@ import { ActionSheetIOS, Alert, Image, Platform, Pressable, Text, View } from 'r
 import { Ionicons } from '@expo/vector-icons';
 import { deletePhoto, photoUri, pickFromLibrary, takePhoto } from '../services/photos';
 import { t } from '../i18n';
-import { colors, font, radius, space } from '../theme';
+import { font, radius, space, useTheme } from '../theme';
 
 /** Shows the current photo (relative path) and lets the user replace or remove it. */
 export function PhotoField({ value, onChange, aspect = 3 / 4 }: { value: string | null; onChange: (rel: string | null) => void; aspect?: number }) {
+  const { colors, dark } = useTheme();
   async function choose() {
     const options = [t.common.takePhoto, t.common.chooseFromLibrary, ...(value ? [t.common.removePhoto] : []), t.common.cancel];
     const run = async (index: number) => {
@@ -33,7 +34,7 @@ export function PhotoField({ value, onChange, aspect = 3 / 4 }: { value: string 
     };
     if (Platform.OS === 'ios') {
       ActionSheetIOS.showActionSheetWithOptions(
-        { options, cancelButtonIndex: options.length - 1, destructiveButtonIndex: value ? 2 : undefined },
+        { options, cancelButtonIndex: options.length - 1, destructiveButtonIndex: value ? 2 : undefined, userInterfaceStyle: dark ? 'dark' : 'light', tintColor: colors.tint },
         (i) => void run(i),
       );
     } else {
@@ -47,13 +48,13 @@ export function PhotoField({ value, onChange, aspect = 3 / 4 }: { value: string 
   }
 
   return (
-    <Pressable onPress={choose} style={{ alignSelf: 'flex-start' }}>
+    <Pressable onPress={choose} accessibilityRole="button" accessibilityLabel={value ? t.common.photo : t.common.addPhoto} style={({ pressed }) => ({ alignSelf: 'flex-start', opacity: pressed ? 0.8 : 1 })}>
       {value ? (
-        <Image source={{ uri: photoUri(value)! }} style={{ width: 160, aspectRatio: aspect, borderRadius: radius.md, backgroundColor: colors.chipBg }} />
+        <Image source={{ uri: photoUri(value)! }} style={{ width: 160, aspectRatio: aspect, borderRadius: radius.md, backgroundColor: colors.surfaceAlt }} />
       ) : (
-        <View style={{ width: 160, aspectRatio: aspect, borderRadius: radius.md, backgroundColor: colors.chipBg, borderWidth: 1, borderColor: colors.border, borderStyle: 'dashed', alignItems: 'center', justifyContent: 'center', gap: space.xs }}>
-          <Ionicons name="camera-outline" size={32} color={colors.textMuted} />
-          <Text style={font.caption}>{t.common.addPhoto}</Text>
+        <View style={{ width: 160, aspectRatio: aspect, borderRadius: radius.md, backgroundColor: colors.surface, borderWidth: 1.5, borderColor: colors.separator, borderStyle: 'dashed', alignItems: 'center', justifyContent: 'center', gap: space.xs }}>
+          <Ionicons name="camera-outline" size={32} color={colors.tint} />
+          <Text style={[font.caption, { color: colors.textMuted }]}>{t.common.addPhoto}</Text>
         </View>
       )}
     </Pressable>
