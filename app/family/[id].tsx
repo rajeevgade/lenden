@@ -91,6 +91,17 @@ export default function FamilyDetailScreen() {
         ) : (
           totals.map((tt, i) => (
             <View key={tt.currency} style={{ marginTop: i ? space.xl : 0 }}>
+              {/* Balance leads: it is the number the gift-keeper opens this screen for. */}
+              <Txt variant="label" tone="muted">
+                {t.family.net}
+              </Txt>
+              <MoneyText amountMinor={tt.netMinor} currency={tt.currency} size="lg" showPlus />
+              <Txt variant="subhead" tone="muted">
+                {tt.netMinor > 0 ? t.family.netAhead : tt.netMinor < 0 ? t.family.netBehind : t.family.netEven}
+              </Txt>
+              <View style={{ marginVertical: space.md }}>
+                <Separator inset={0} />
+              </View>
               <Row style={{ justifyContent: 'space-between', alignItems: 'flex-start' }}>
                 <View>
                   <Txt variant="footnote" tone="muted">
@@ -104,15 +115,6 @@ export default function FamilyDetailScreen() {
                   </Txt>
                   <MoneyText amountMinor={tt.gaveMinor} currency={tt.currency} direction="gave" />
                 </View>
-              </Row>
-              <View style={{ marginVertical: space.md }}>
-                <Separator inset={0} />
-              </View>
-              <Row style={{ justifyContent: 'space-between' }}>
-                <Txt variant="subhead" tone="muted">
-                  {tt.netMinor > 0 ? t.family.netAhead : tt.netMinor < 0 ? t.family.netBehind : t.family.netEven}
-                </Txt>
-                <MoneyText amountMinor={tt.netMinor} currency={tt.currency} showPlus />
               </Row>
             </View>
           ))
