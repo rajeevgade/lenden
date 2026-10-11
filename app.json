@@ -1,0 +1,47 @@
+{
+  "expo": {
+    "name": "LenDen",
+    "slug": "lenden",
+    "version": "0.1.0",
+    "orientation": "portrait",
+    "scheme": "lenden",
+    "userInterfaceStyle": "light",
+    "newArchEnabled": true,
+    "icon": "./assets/icon.png",
+    "splash": {
+      "image": "./assets/splash.png",
+      "resizeMode": "contain",
+      "backgroundColor": "#FBF6EE"
+    },
+    "ios": {
+      "supportsTablet": false,
+      "bundleIdentifier": "com.rajeevgade.lenden",
+      "infoPlist": {
+        "NSCameraUsageDescription": "LenDen uses the camera to photograph gifts and outfits.",
+        "NSPhotoLibraryUsageDescription": "LenDen lets you attach photos of gifts and outfits from your library."
+      }
+    },
+    "android": {
+      "package": "com.rajeevgade.lenden",
+      "adaptiveIcon": {
+        "foregroundImage": "./assets/adaptive-icon.png",
+        "backgroundColor": "#FBF6EE"
+      },
+      "edgeToEdgeEnabled": true
+    },
+    "plugins": [
+      "expo-router",
+      "expo-sqlite",
+      [
+        "expo-image-picker",
+        {
+          "photosPermission": "LenDen lets you attach photos of gifts and outfits from your library.",
+          "cameraPermission": "LenDen uses the camera to photograph gifts and outfits."
+        }
+      ]
+    ],
+    "experiments": {
+      "typedRoutes": true
+    }
+  }
+}
